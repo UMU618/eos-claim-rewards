@@ -125,8 +125,9 @@ module.exports = {
             .get_currency_balance('eosio.token', self.producerName)
             .then((res) => {
               module.exports.sendMessage(self.dingtalkToken, date.toJSON()
-                + ', claimed rewards on ' + self.chainName + ', '
-                + self.producerName + ' : ' + res[0] + '.')
+                + ', ' + require('os').hostname() + ' claimed rewards on '
+                + self.chainName + ', ' + self.producerName + ' : ' + res[0]
+                + '.')
             })
         }, (err) => {
           console.log('claim rewards failed on ' + self.chainName + '.')
