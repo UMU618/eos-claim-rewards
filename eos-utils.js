@@ -69,22 +69,24 @@ module.exports = {
           if (now - lastClaimTime >= MS_PER_DAY) {
             // Check 10s later to ensure success
             nextClaimDiff = 10 * 1000
-            console.log('Last claim rewards from ' + self.chainName + ' on '
-              + lastClaimTime.toJSON() + ', claiming on ' + now + '.')
-            self.claimRewards();
+            console.log(self.producerName + ' last claimed rewards from '
+              + self.chainName + ' on ' + lastClaimTime.toJSON()
+              + ', claiming on ' + now + ', and will check after '
+              + nextClaimDiff + 'ms.')
+            self.claimRewards()
           } else {
             nextClaimDiff = MS_PER_DAY - (now - lastClaimTime)
-            console.log('Last claim rewards from ' + self.chainName + ' on '
-              + lastClaimTime.toJSON() + ', can not claim right now.')
+            console.log(self.producerName + ' last claimed rewards from '
+              + self.chainName + ' on ' + lastClaimTime.toJSON()
+              + ', will claim after ' + nextClaimDiff + 'ms.')
           }
-          console.log('Will claim after ' + nextClaimDiff + 'ms.')
 
           setTimeout(function () {
-            self.detectLastClaimTime();
+            self.detectLastClaimTime()
           }, nextClaimDiff)
         }, function (err) {
           setTimeout(function () {
-            self.detectLastClaimTime();
+            self.detectLastClaimTime()
           }, 10 * 1000)
         })
     }
@@ -98,7 +100,7 @@ module.exports = {
       const api = new Api({
         rpc: this.rpc, signatureProvider: sig, chainId: this.chainId
         , textDecoder: new TextDecoder(), textEncoder: new TextEncoder()
-      });
+      })
       api
         .transact({
           actions: [{
@@ -118,7 +120,10 @@ module.exports = {
             expireSeconds: 60,
             sign: true
           })
-        .then(function () {
+        .then(function (r) {
+          console.log('transact:', r)
+          console.log('action_traces:', r.processed.action_traces)
+          console.log('action_traces[0].act.data:', r.processed.action_traces[0].act.data)
           // get account balance after claim reward.
           let date = new Date()
           self.rpc
