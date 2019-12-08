@@ -121,9 +121,9 @@ module.exports = {
             sign: true
           })
         .then(function (r) {
-          console.log('transact:', r)
-          console.log('action_traces:', r.processed.action_traces)
-          console.log('action_traces[0].act.data:', r.processed.action_traces[0].act.data)
+          // console.log('*:', r)
+          // const d = api.deserializeTransaction(r.serializedTransaction)
+          // console.log('*:', d)
           // get account balance after claim reward.
           let date = new Date()
           self.rpc
