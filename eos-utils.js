@@ -8,13 +8,15 @@
 
 'use strict'
 
+const alerts = require('./utils/alerts')
+
 const MS_PER_HOUR = 1000 * 60 * 60
 const MS_PER_DAY = MS_PER_HOUR * 24
 
 module.exports = {
   Claimer: function (chainId, url, chainName
     , producerName, permission, keyProvider
-    , dingtalkToken) {
+    , token) {
     if (!chainId) {
       throw new Error('no chainId')
     }
@@ -24,8 +26,8 @@ module.exports = {
     if (!chainName) {
       throw new Error('no chainName')
     }
-    if (!producerName) {
-      throw new Error('no producerName')
+    if (!module.exports.isValidEosName(producerName)) {
+      throw new Error('invalid producerName')
     }
     if (!permission) {
       throw new Error('no permission')
@@ -33,8 +35,8 @@ module.exports = {
     if (!keyProvider) {
       throw new Error('no keyProvider')
     }
-    if (!dingtalkToken) {
-      console.log('Warning: no dingtalkToken, will not send messages.')
+    if (!token) {
+      console.log('Warning: no token, will not send messages.')
     }
 
     const { Api, JsonRpc } = require('eosjs')
@@ -45,7 +47,7 @@ module.exports = {
     this.producerName = producerName
     this.permission = permission
     this.keyProvider = keyProvider
-    this.dingtalkToken = dingtalkToken
+    this.token = token
 
     this.rpc = new JsonRpc(url, { fetch })
 
@@ -121,15 +123,12 @@ module.exports = {
             sign: true
           })
         .then(function (r) {
-          // console.log('*:', r)
-          // const d = api.deserializeTransaction(r.serializedTransaction)
-          // console.log('*:', d)
           // get account balance after claim reward.
           let date = new Date()
           self.rpc
             .get_currency_balance('eosio.token', self.producerName)
             .then((res) => {
-              module.exports.sendMessage(self.dingtalkToken, date.toJSON()
+              alerts.sendFeishu(self.token, date.toJSON()
                 + ', ' + require('os').hostname() + ' claimed rewards on '
                 + self.chainName + ', ' + self.producerName + ' : ' + res[0]
                 + '.')
@@ -141,32 +140,27 @@ module.exports = {
     }
   }
 
-  , sendMessage: (token, text) => {
-    if (!token || !text) {
-      console.log('Message: ' + text)
-      return
+  , isValidEosName: (name) => {
+    if (typeof name !== 'string' || !name) {
+      return false
     }
-    const fetch = require('node-fetch')
-
-    fetch('https://oapi.dingtalk.com/robot/send?access_token=' + token, {
-      method: 'POST'
-      , headers: {
-        'Content-Type': 'application/json'
+    if (name.length > 13) {
+      return false
+    }
+    const charmap = '.12345abcdefghijklmnopqrstuvwxyz'
+    let length = name.length
+    if (length == 13) {
+      const idx = charmap.indexOf(name[--length])
+      if (idx === -1 || idx > 15) {
+        return false
       }
-      , body: JSON.stringify({
-        "msgtype": "text"
-        , "text": {
-          "content": text
-        }
-      })
-    }).then((res) => {
-      if (res.ok) {
-        console.log('Message sent: ' + text)
-      } else {
-        console.log('status = ' + res.status)
+    }
+    for (let i = 0; i < length; ++i) {
+      const idx = charmap.indexOf(name[i])
+      if (idx === -1) {
+        return false
       }
-    }, (err) => {
-      console.log(err)
-    })
+    }
+    return true
   }
 }
